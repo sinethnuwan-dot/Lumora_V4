@@ -37,27 +37,11 @@ class Detector:
             volume_speed=candle["volume_acceleration"],
         )
 
-        logger.info(
-            f"CHANGE -> "
-            f"{change:.2f}% | "
-            f"Volume={candle['volume']:.2f} | "
-            f"Trades={candle['trade_count']} | "
-            f"Speed={candle['volume_acceleration']:.2f} USDT/s | "
-            f"AI={score}/100"
-        )
-
         # -------------------------
         # Volume Filter
         # -------------------------
 
         if candle["volume"] < Config.MIN_VOLUME:
-
-            logger.info(
-                f"Volume Filter -> "
-                f"{candle['volume']:.2f} / "
-                f"{Config.MIN_VOLUME}"
-            )
-
             return None
 
         # -------------------------
@@ -65,13 +49,6 @@ class Detector:
         # -------------------------
 
         if candle["trade_count"] < Config.MIN_TRADES:
-
-            logger.info(
-                f"Trade Filter -> "
-                f"{candle['trade_count']} / "
-                f"{Config.MIN_TRADES}"
-            )
-
             return None
 
         # ==================================================
@@ -147,12 +124,6 @@ class Detector:
                     2,
                 ),
             }
-
-        # -------------------------
-        # No Signal
-        # -------------------------
-
-        logger.info("No Signal")
 
         return None
 
