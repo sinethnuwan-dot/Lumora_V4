@@ -1,52 +1,67 @@
 import asyncio
 
-from app.alert_queue import alert_queue
 from app.formatter import format_alert
+from app.telegram_client import telegram
+
+
+signals = [
+
+    {
+        "type": "WATCH",
+        "direction": "PUMP",
+        "symbol": "BTCUSDT",
+        "price": 110250.45,
+        "change": 5.34,
+        "volume": 486240,
+        "volume_speed": 8420.12,
+        "trades": 1243,
+        "ai_score": 72,
+        "strength": "🟡 GOOD",
+    },
+
+    {
+        "type": "CONFIRM",
+        "direction": "PUMP",
+        "symbol": "BTCUSDT",
+        "price": 114830.15,
+        "change": 9.84,
+        "volume": 1680420,
+        "volume_speed": 18540.82,
+        "trades": 5842,
+        "ai_score": 96,
+        "strength": "🔴 EXTREME",
+    },
+
+    {
+        "type": "CONFIRM",
+        "direction": "DUMP",
+        "symbol": "ETHUSDT",
+        "price": 3245.80,
+        "change": -10.42,
+        "volume": 2120650,
+        "volume_speed": 21320.66,
+        "trades": 7120,
+        "ai_score": 98,
+        "strength": "🔴 EXTREME",
+    },
+
+]
 
 
 async def main():
 
-    # Start queue worker
-    asyncio.create_task(
-        alert_queue.worker()
-    )
+    for signal in signals:
 
-    # WATCH Signal Test
-    watch_signal = {
-        "type": "WATCH",
-        "direction": "PUMP",
-        "symbol": "BTCUSDT",
-        "change": 5.23,
-        "price": 110250.75,
-        "volume": 250000,
-        "trades": 126,
-    }
+        message = format_alert(signal)
 
-    # CONFIRM Signal Test
-    confirm_signal = {
-        "type": "CONFIRM",
-        "direction": "PUMP",
-        "symbol": "BTCUSDT",
-        "change": 9.84,
-        "price": 114830.15,
-        "volume": 680000,
-        "trades": 482,
-    }
+        print("=" * 60)
+        print(message)
 
-    print("=" * 60)
-    print(format_alert(watch_signal))
+        await telegram.send(message)
 
-    await alert_queue.put(watch_signal)
-
-    await asyncio.sleep(2)
-
-    print("=" * 60)
-    print(format_alert(confirm_signal))
-
-    await alert_queue.put(confirm_signal)
-
-    await asyncio.sleep(5)
+        await asyncio.sleep(2)
 
 
 if __name__ == "__main__":
+
     asyncio.run(main())

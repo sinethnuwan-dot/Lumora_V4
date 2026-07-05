@@ -8,7 +8,7 @@ class Config:
     # =====================================
 
     APP_NAME = "Lumora"
-    VERSION = "4.0.0-RC1"
+    VERSION = "4.1.0-STABLE"
 
     # =====================================
     # BINANCE

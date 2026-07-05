@@ -1,6 +1,7 @@
 from app.alert_queue import alert_queue
 from app.detector import detector
 from app.logger import logger
+from app.signal_builder import signal_builder
 from app.trade_tracker import trade_tracker
 
 
@@ -14,7 +15,7 @@ class Scanner:
     ) -> None:
 
         # -------------------------
-        # Update live candle
+        # Update Live Candle
         # -------------------------
 
         candle = trade_tracker.update(
@@ -23,12 +24,11 @@ class Scanner:
             quantity=quantity,
         )
 
-        # Ignore invalid trades
         if candle is None:
             return
 
         # -------------------------
-        # DEBUG CANDLE
+        # Debug Candle
         # -------------------------
 
         logger.info(
@@ -39,11 +39,12 @@ class Scanner:
             f"High={candle['high']} | "
             f"Low={candle['low']} | "
             f"Volume={round(candle['volume'],2)} | "
-            f"Trades={candle['trade_count']}"
+            f"Trades={candle['trade_count']} | "
+            f"VolSpeed={round(candle['volume_acceleration'],2)}"
         )
 
         # -------------------------
-        # Detect signal
+        # Detect Signal
         # -------------------------
 
         signal = detector.check(candle)
@@ -52,33 +53,42 @@ class Scanner:
             return
 
         # -------------------------
-        # Add extra data
+        # Build Signal
         # -------------------------
 
-        signal["symbol"] = symbol
-        signal["price"] = candle["current"]
-        signal["volume"] = candle["volume"]
-        signal["trades"] = candle["trade_count"]
+        signal = signal_builder.build(
+            signal=signal,
+            candle=candle,
+            symbol=symbol,
+        )
 
         # -------------------------
-        # Prevent duplicate alerts
+        # Prevent Duplicate Alerts
         # -------------------------
 
         if signal["type"] == "WATCH":
+
             candle["watch_sent"] = True
 
         elif signal["type"] == "CONFIRM":
+
             candle["confirm_sent"] = True
+
+        # -------------------------
+        # Debug Signal
+        # -------------------------
 
         logger.info(
             f"{signal['type']} | "
             f"{signal['direction']} | "
-            f"{symbol} | "
-            f"{signal['change']}%"
+            f"{signal['symbol']} | "
+            f"{signal['change']}% | "
+            f"AI={signal['ai_score']} | "
+            f"Strength={signal['strength']}"
         )
 
         # -------------------------
-        # Send to Telegram queue
+        # Queue Telegram Alert
         # -------------------------
 
         await alert_queue.put(signal)

@@ -2,6 +2,7 @@ import time
 
 from app.config import Config
 from app.logger import logger
+from app.volume_acceleration import volume_acceleration
 
 
 class TradeTracker:
@@ -16,7 +17,7 @@ class TradeTracker:
         quantity: float,
     ) -> dict:
 
-        now = int(time.time())
+        now = time.time()
         usdt_volume = price * quantity
 
         # -------------------------
@@ -33,7 +34,7 @@ class TradeTracker:
         if symbol not in self.candles:
 
             candle = {
-                "start_time": now,
+                "start_time": int(now),
                 "open": price,
                 "high": price,
                 "low": price,
@@ -42,6 +43,11 @@ class TradeTracker:
                 "trade_count": 1,
                 "watch_sent": False,
                 "confirm_sent": False,
+
+                # V4.1
+                "last_volume": usdt_volume,
+                "last_volume_time": now,
+                "volume_acceleration": 0.0,
             }
 
             self.candles[symbol] = candle
@@ -50,29 +56,18 @@ class TradeTracker:
                 f"NEW CANDLE | {symbol} | Open={price}"
             )
 
-            logger.info(
-                f"CANDLE | "
-                f"{symbol} | "
-                f"Open={candle['open']} | "
-                f"Current={candle['current']} | "
-                f"High={candle['high']} | "
-                f"Low={candle['low']} | "
-                f"Volume={round(candle['volume'],2)} | "
-                f"Trades={candle['trade_count']}"
-            )
-
             return candle
 
         candle = self.candles[symbol]
 
         # -------------------------
-        # New 15 minute candle
+        # Reset every 15 minutes
         # -------------------------
 
         if now - candle["start_time"] >= Config.CANDLE_SECONDS:
 
             candle = {
-                "start_time": now,
+                "start_time": int(now),
                 "open": price,
                 "high": price,
                 "low": price,
@@ -81,23 +76,17 @@ class TradeTracker:
                 "trade_count": 1,
                 "watch_sent": False,
                 "confirm_sent": False,
+
+                # V4.1
+                "last_volume": usdt_volume,
+                "last_volume_time": now,
+                "volume_acceleration": 0.0,
             }
 
             self.candles[symbol] = candle
 
             logger.info(
                 f"RESET CANDLE | {symbol}"
-            )
-
-            logger.info(
-                f"CANDLE | "
-                f"{symbol} | "
-                f"Open={candle['open']} | "
-                f"Current={candle['current']} | "
-                f"High={candle['high']} | "
-                f"Low={candle['low']} | "
-                f"Volume={round(candle['volume'],2)} | "
-                f"Trades={candle['trade_count']}"
             )
 
             return candle
@@ -117,6 +106,22 @@ class TradeTracker:
         candle["volume"] += usdt_volume
         candle["trade_count"] += 1
 
+        # -------------------------
+        # Volume Acceleration
+        # -------------------------
+
+        elapsed = now - candle["last_volume_time"]
+
+        accel = volume_acceleration.calculate(
+            previous_volume=candle["last_volume"],
+            current_volume=candle["volume"],
+            elapsed_seconds=elapsed,
+        )
+
+        candle["volume_acceleration"] = accel
+        candle["last_volume"] = candle["volume"]
+        candle["last_volume_time"] = now
+
         logger.info(
             f"CANDLE | "
             f"{symbol} | "
@@ -125,7 +130,8 @@ class TradeTracker:
             f"High={candle['high']} | "
             f"Low={candle['low']} | "
             f"Volume={round(candle['volume'],2)} | "
-            f"Trades={candle['trade_count']}"
+            f"Trades={candle['trade_count']} | "
+            f"VolSpeed={accel:.2f} USDT/s"
         )
 
         return candle
@@ -140,7 +146,9 @@ class TradeTracker:
 
             del self.candles[symbol]
 
-            logger.info(f"{symbol} tracker removed.")
+            logger.info(
+                f"{symbol} tracker removed."
+            )
 
 
 trade_tracker = TradeTracker()
