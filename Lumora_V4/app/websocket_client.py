@@ -52,16 +52,6 @@ class BinanceWebSocket:
                                 price = float(trade["p"])
                                 quantity = float(trade["q"])
 
-                                # ==========================
-                                # DEBUG RAW TRADE
-                                # ==========================
-                                logger.info(
-                                    f"RAW -> "
-                                    f"{symbol} | "
-                                    f"Price={price} | "
-                                    f"Qty={quantity}"
-                                )
-
                                 await scanner.process_trade(
                                     symbol=symbol,
                                     price=price,
