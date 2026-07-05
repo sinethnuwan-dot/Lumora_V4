@@ -15,17 +15,6 @@ class Scanner:
     ) -> None:
 
         # -------------------------
-        # DEBUG RAW TRADE
-        # -------------------------
-
-        logger.info(
-            f"RAW -> "
-            f"{symbol} | "
-            f"Price={price} | "
-            f"Qty={quantity}"
-        )
-
-        # -------------------------
         # Update Live Candle
         # -------------------------
 
@@ -36,28 +25,7 @@ class Scanner:
         )
 
         if candle is None:
-
-            logger.warning(
-                f"Invalid candle -> {symbol}"
-            )
-
             return
-
-        # -------------------------
-        # Debug Candle
-        # -------------------------
-
-        logger.info(
-            f"CANDLE -> "
-            f"{symbol} | "
-            f"Open={candle['open']} | "
-            f"Current={candle['current']} | "
-            f"High={candle['high']} | "
-            f"Low={candle['low']} | "
-            f"Volume={round(candle['volume'],2)} | "
-            f"Trades={candle['trade_count']} | "
-            f"VolSpeed={round(candle['volume_acceleration'],2)}"
-        )
 
         # -------------------------
         # Detect Signal
@@ -66,11 +34,6 @@ class Scanner:
         signal = detector.check(candle)
 
         if signal is None:
-
-            logger.info(
-                f"No Signal -> {symbol}"
-            )
-
             return
 
         # -------------------------
@@ -96,7 +59,7 @@ class Scanner:
             candle["confirm_sent"] = True
 
         # -------------------------
-        # Debug Signal
+        # Signal Log
         # -------------------------
 
         logger.info(
@@ -115,7 +78,7 @@ class Scanner:
         await alert_queue.put(signal)
 
         logger.info(
-            f"Alert queued -> "
+            f"Telegram Queue -> "
             f"{signal['symbol']}"
         )
 

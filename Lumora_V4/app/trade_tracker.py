@@ -43,8 +43,6 @@ class TradeTracker:
                 "trade_count": 1,
                 "watch_sent": False,
                 "confirm_sent": False,
-
-                # V4.1
                 "last_volume": usdt_volume,
                 "last_volume_time": now,
                 "volume_acceleration": 0.0,
@@ -76,8 +74,6 @@ class TradeTracker:
                 "trade_count": 1,
                 "watch_sent": False,
                 "confirm_sent": False,
-
-                # V4.1
                 "last_volume": usdt_volume,
                 "last_volume_time": now,
                 "volume_acceleration": 0.0,
@@ -112,27 +108,14 @@ class TradeTracker:
 
         elapsed = now - candle["last_volume_time"]
 
-        accel = volume_acceleration.calculate(
+        candle["volume_acceleration"] = volume_acceleration.calculate(
             previous_volume=candle["last_volume"],
             current_volume=candle["volume"],
             elapsed_seconds=elapsed,
         )
 
-        candle["volume_acceleration"] = accel
         candle["last_volume"] = candle["volume"]
         candle["last_volume_time"] = now
-
-        logger.info(
-            f"CANDLE | "
-            f"{symbol} | "
-            f"Open={candle['open']} | "
-            f"Current={candle['current']} | "
-            f"High={candle['high']} | "
-            f"Low={candle['low']} | "
-            f"Volume={round(candle['volume'],2)} | "
-            f"Trades={candle['trade_count']} | "
-            f"VolSpeed={accel:.2f} USDT/s"
-        )
 
         return candle
 
