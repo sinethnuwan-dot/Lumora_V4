@@ -15,6 +15,17 @@ class Scanner:
     ) -> None:
 
         # -------------------------
+        # DEBUG RAW TRADE
+        # -------------------------
+
+        logger.info(
+            f"RAW -> "
+            f"{symbol} | "
+            f"Price={price} | "
+            f"Qty={quantity}"
+        )
+
+        # -------------------------
         # Update Live Candle
         # -------------------------
 
@@ -25,6 +36,11 @@ class Scanner:
         )
 
         if candle is None:
+
+            logger.warning(
+                f"Invalid candle -> {symbol}"
+            )
+
             return
 
         # -------------------------
@@ -50,6 +66,11 @@ class Scanner:
         signal = detector.check(candle)
 
         if signal is None:
+
+            logger.info(
+                f"No Signal -> {symbol}"
+            )
+
             return
 
         # -------------------------
@@ -92,6 +113,11 @@ class Scanner:
         # -------------------------
 
         await alert_queue.put(signal)
+
+        logger.info(
+            f"Alert queued -> "
+            f"{signal['symbol']}"
+        )
 
 
 scanner = Scanner()
